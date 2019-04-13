@@ -100,10 +100,7 @@ void GyrodometryPCA::CallbackOdom(const nav_msgs::OdometryConstPtr& msg)
 	if(!first_callback_odom)	Odom2Dto3D();
 	odom_record.push_back(odom3d_now);
 	if(odom_record.size()>2)	ComputePCA();
-	if(odom_record.size()>1000){	//test
-		odom_record.clear();
-		std::cout << "clear" << std::endl;
-	}
+	if(odom_record.size()>1000)	odom_record.clear();	//test
 
 	odom2d_last = odom2d_now;
 	odom3d_last = odom3d_now;
