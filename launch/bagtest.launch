@@ -1,0 +1,22 @@
+<launch>
+	<!-- global rosparam -->
+	<param name="use_sim_time" value="true"/>
+
+	<!-- rosbag -->
+	<node pkg="rosbag" type="play" name="player" args="--clock /home/amsl/ozaki/bagfiles/infant/mocap/0113_infant/2019-01-13-15-46-58.bag -s 30"/>
+
+	<!-- rviz -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d /home/amsl/.rviz/tsukuba2019.rviz"/>
+
+	<!-- sensor driver -->
+	<include file="$(find velodyne_pointcloud)/launch/32e_points.launch"/>
+
+	<!-- for infant -->
+	<node pkg="pose_estimation_walls" name="odom_republish_infant" type="odom_republish_infant"/>
+
+	<!-- main -->
+	<node pkg="gyrodometry" name="initial_alignment" type="initial_alignment" output="screen"/>
+	<node pkg="tsukuba2019" name="gyrodometry_pca" type="gyrodometry_pca" output="screen">
+		<remap from="/odom" to="/tinypower/odom/republished"/>
+	</node>
+</launch>
