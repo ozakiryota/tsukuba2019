@@ -201,6 +201,7 @@ void GyrodometryPCA::Correction(void)
 	quaternionTFToMsg(q_pose_corrected, odom3d_now.pose.pose.orientation);
 	odom3d_now.pose.pose.position.x = map.nodes[node_g].point.x;
 	odom3d_now.pose.pose.position.y = map.nodes[node_g].point.y;
+	odom_record.push_back(odom3d_now);
 }
 
 void GyrodometryPCA::CallbackIMU(const sensor_msgs::ImuConstPtr& msg)
