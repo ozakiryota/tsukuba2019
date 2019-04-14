@@ -47,6 +47,7 @@ class GyrodometryPCA{
 		void CallbackOdom(const nav_msgs::OdometryConstPtr& msg);
 		void Odom2Dto3D(void);
 		void ComputePCA(void);
+		void Correction(void);	//test
 		void CallbackIMU(const sensor_msgs::ImuConstPtr& msg);
 		void CallbackBias(const sensor_msgs::ImuConstPtr& msg);
 		void CallbackMap(const amsl_navigation_msgs::NodeEdgeMapConstPtr& msg);
@@ -100,6 +101,7 @@ void GyrodometryPCA::CallbackOdom(const nav_msgs::OdometryConstPtr& msg)
 	if(!first_callback_odom)	Odom2Dto3D();
 	odom_record.push_back(odom3d_now);
 	if(odom_record.size()>2)	ComputePCA();
+
 	if(odom_record.size()>1000)	odom_record.clear();	//test
 
 	odom2d_last = odom2d_now;
@@ -182,6 +184,23 @@ void GyrodometryPCA::ComputePCA(void)
 	/* std::cout << "es.eigenvectors():" << std::endl << es.eigenvectors() << std::endl; */
 	std::cout << "es.eigenvectors().real():" << std::endl << es.eigenvectors().real() << std::endl;
 	std::cout << "eigenvectors.col(col_pc1):" << std::endl << eigenvectors.col(col_pc1) << std::endl;
+}
+
+void GyrodometryPCA::Correction(void)
+{
+	int node_s = 1;
+	int node_g = 2;
+
+	double dx = map.nodes[node_g].point.x - map.nodes[node_s].point.x;
+	double dy = map.nodes[node_g].point.y - map.nodes[node_s].point.y;
+	tf::Quaternion q_edge_ori_global = tf::createQuaternionFromRPY(0.0, 0.0, atan2(dy, dx));
+	tf::Quaternion q_edge_ori_local(0.0, 0.0, 0.0, 1.0);	//test
+	tf::Quaternion q_pose_corrected = q_edge_ori_local*q_edge_ori_global.inverse();
+
+	odom_record.clear();
+	quaternionTFToMsg(q_pose_corrected, odom3d_now.pose.pose.orientation);
+	odom3d_now.pose.pose.position.x = map.nodes[node_g].point.x;
+	odom3d_now.pose.pose.position.y = map.nodes[node_g].point.y;
 }
 
 void GyrodometryPCA::CallbackIMU(const sensor_msgs::ImuConstPtr& msg)
