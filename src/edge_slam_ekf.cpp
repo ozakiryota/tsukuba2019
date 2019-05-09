@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <Eigen/Core>
-/* #include <Eigen/LU> */
+#include <Eigen/LU>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -18,13 +18,13 @@ class EdgeSLAMEKF{
 		/*publish*/
 		ros::Publisher pub_pose;
 		/*const*/
-		const int num_state = 3;
-		const int size_robot_state = 6;	//X, Y, Z, R, P, Y (Global)
+		const int size_robot_state = 6;
 		/*objects*/
-		Eigen::MatrixXd X;
-		Eigen::MatrixXd P;
 		sensor_msgs::Imu bias;
-		Eigen::VectorXd Reset_origin;
+		/* Eigen::MatrixXd X;	//X, Y, Z, R, P, Y (Global) */
+		Eigen::VectorXd X;	//X, Y, Z, R, P, Y (Global)
+		Eigen::MatrixXd P;
+		Eigen::VectorXd Reset_origin;	//X, Y, Z, R, P, Y (Global)
 		/*flags*/
 		bool bias_is_available = false;
 		bool first_callback_imu = true;
@@ -60,22 +60,22 @@ EdgeSLAMEKF::EdgeSLAMEKF()
 	sub_bias = nh.subscribe("/imu_bias", 1, &EdgeSLAMEKF::CallbackBias, this);
 	sub_imu = nh.subscribe("/imu/data", 1, &EdgeSLAMEKF::CallbackIMU, this);
 	sub_odom = nh.subscribe("/tinypower/odom", 1, &EdgeSLAMEKF::CallbackOdom, this);
-	sub_odom = nh.subscribe("/integrated_to_init", 1, &EdgeSLAMEKF::CallbackSLAMOdom, this);
+	sub_slam_odom = nh.subscribe("/integrated_to_init", 1, &EdgeSLAMEKF::CallbackSLAMOdom, this);
 	pub_pose = nh.advertise<geometry_msgs::PoseStamped>("/pose_edge_slam_ekf", 1);
-	X = Eigen::MatrixXd::Constant(size_robot_state, 1, 0.0);
+	X = Eigen::VectorXd::Zero(size_robot_state);
 	P = Eigen::MatrixXd::Identity(size_robot_state, size_robot_state);
-	Reset_origin = Eigen::VectorXd::Zero(6);
+	Reset_origin = Eigen::VectorXd::Zero(size_robot_state);
 }
 
 void EdgeSLAMEKF::CallbackResetPose(const geometry_msgs::PoseStampedConstPtr& msg)
 {
 	Eigen::Vector3d Reset_delta_xyz = {
-		msg->pose.position.x - X(0, 0),
-		msg->pose.position.y - X(1, 0),
-		msg->pose.position.z - X(2, 0)
+		msg->pose.position.x - X(0),
+		msg->pose.position.y - X(1),
+		msg->pose.position.z - X(2)
 	};
 
-	tf::Quaternion q_pose_origin = tf::createQuaternionFromRPY(X(3, 0), X(4, 0), X(5, 0));
+	tf::Quaternion q_pose_origin = tf::createQuaternionFromRPY(X(3), X(4), X(5));
 	tf::Quaternion q_pose_target;
 	quaternionMsgToTF(msg->pose.orientation, q_pose_target);
 
@@ -83,8 +83,8 @@ void EdgeSLAMEKF::CallbackResetPose(const geometry_msgs::PoseStampedConstPtr& ms
 	tf::Matrix3x3(q_pose_target*q_pose_origin.inverse()).getRPY(Reset_delta_rpy(0), Reset_delta_rpy(1), Reset_delta_rpy(2));
 	Reset_delta_rpy = {0, 0, Reset_delta_rpy(2)};	//only yaw is used because of 2D
 
-	Reset_origin.segment(0, 3) -= Reset_delta_xyz;
-	Reset_origin.segment(3, 3) -= Reset_delta_rpy;
+	Reset_origin.segment(0, 3) += Reset_delta_xyz;
+	Reset_origin.segment(3, 3) += Reset_delta_rpy;
 }
 
 void EdgeSLAMEKF::CallbackBias(const sensor_msgs::ImuConstPtr& msg)
@@ -97,7 +97,7 @@ void EdgeSLAMEKF::CallbackBias(const sensor_msgs::ImuConstPtr& msg)
 
 void EdgeSLAMEKF::CallbackIMU(const sensor_msgs::ImuConstPtr& msg)
 {
-	std::cout << "Callback IMU" << std::endl;
+	/* std::cout << "Callback IMU" << std::endl; */
 
 	time_imu_now = ros::Time::now();
 	double dt;
@@ -118,13 +118,13 @@ void EdgeSLAMEKF::CallbackIMU(const sensor_msgs::ImuConstPtr& msg)
 
 void EdgeSLAMEKF::PredictionIMU(sensor_msgs::Imu imu, double dt)
 {
-	std::cout << "PredictionIMU" << std::endl;
-	double x = X(0, 0);
-	double y = X(1, 0);
-	double z = X(2, 0);
-	double r_ = X(3, 0);
-	double p_ = X(4, 0);
-	double y_ = X(5, 0);
+	/* std::cout << "PredictionIMU" << std::endl; */
+	double x = X(0);
+	double y = X(1);
+	double z = X(2);
+	double r_ = X(3);
+	double p_ = X(4);
+	double y_ = X(5);
 
 	double delta_r = imu.angular_velocity.x*dt;
 	double delta_p = imu.angular_velocity.y*dt;
@@ -147,12 +147,12 @@ void EdgeSLAMEKF::PredictionIMU(sensor_msgs::Imu imu, double dt)
 					cos(delta_r)*sin(delta_p)*cos(delta_y) + sin(delta_r)*sin(delta_y),	cos(delta_r)*sin(delta_p)*sin(delta_y) - sin(delta_r)*cos(delta_y),	cos(delta_r)*cos(delta_p);
 
 	/*F*/
-	Eigen::MatrixXd F(X.rows(), 1);
-	F.block(0, 0, 3, 1) = X.block(0, 0, 3, 1);
-	F.block(3, 0, 3, 1) = X.block(3, 0, 3, 1) + Rot_rpy*Drpy;
+	Eigen::MatrixXd F(X.size(), 1);
+	F.block(0, 0, 3, 1) = X.segment(0, 3);
+	F.block(3, 0, 3, 1) = X.segment(3, 3) + Rot_rpy*Drpy;
 
 	/*jF*/
-	Eigen::MatrixXd jF(X.rows(), X.rows());
+	Eigen::MatrixXd jF(X.size(), X.size());
 	/*jF-xyz*/
 	jF.block(0, 0, 3, 3) = Eigen::Matrix3d::Identity();
 	jF.block(0, 3, 3, 3) = Eigen::Matrix3d::Zero();
@@ -170,20 +170,20 @@ void EdgeSLAMEKF::PredictionIMU(sensor_msgs::Imu imu, double dt)
 	
 	/*Q*/
 	const double sigma = 1.0e-1;
-	Eigen::MatrixXd Q = sigma*Eigen::MatrixXd::Identity(X.rows(), X.rows());
+	Eigen::MatrixXd Q = sigma*Eigen::MatrixXd::Identity(X.size(), X.size());
 	
 	/*Update*/
 	X = F;
 	P = jF*P*jF.transpose() + Q;
 
-	std::cout << "X =" << std::endl << X << std::endl;
-	std::cout << "P =" << std::endl << P << std::endl;
-	std::cout << "jF =" << std::endl << jF << std::endl;
+	/* std::cout << "jF =" << std::endl << jF << std::endl; */
+	/* std::cout << "X =" << std::endl << X << std::endl; */
+	/* std::cout << "P =" << std::endl << P << std::endl; */
 }
 
 void EdgeSLAMEKF::CallbackOdom(const nav_msgs::OdometryConstPtr& msg)
 {
-	std::cout << "Callback Odom" << std::endl;
+	/* std::cout << "Callback Odom" << std::endl; */
 
 	time_odom_now = ros::Time::now();
 	double dt;
@@ -204,14 +204,14 @@ void EdgeSLAMEKF::CallbackOdom(const nav_msgs::OdometryConstPtr& msg)
 
 void EdgeSLAMEKF::PredictionOdom(nav_msgs::Odometry odom, double dt)
 {
-	std::cout << "Prediction Odom" << std::endl;
+	/* std::cout << "Prediction Odom" << std::endl; */
 
-	double x = X(0, 0);
-	double y = X(1, 0);
-	double z = X(2, 0);
-	double r_ = X(3, 0);
-	double p_ = X(4, 0);
-	double y_ = X(5, 0);
+	double x = X(0);
+	double y = X(1);
+	double z = X(2);
+	double r_ = X(3);
+	double p_ = X(4);
+	double y_ = X(5);
 	Eigen::Vector3d Dxyz = {odom.twist.twist.linear.x*dt, 0, 0};
 
 	Eigen::Matrix3d Rot_xyz;	//normal rotation
@@ -220,12 +220,12 @@ void EdgeSLAMEKF::PredictionOdom(nav_msgs::Odometry odom, double dt)
 				-sin(p_),			sin(r_)*cos(p_),							cos(r_)*cos(p_);
 
 	/*F*/
-	Eigen::MatrixXd F(X.rows(), 1);
-	F.block(0, 0, 3, 1) = X.block(0, 0, 3, 1) + Rot_xyz*Dxyz;
-	F.block(3, 0, 3, 1) = X.block(3, 0, 3, 1);
+	Eigen::MatrixXd F(X.size(), 1);
+	F.block(0, 0, 3, 1) = X.segment(0, 3) + Rot_xyz*Dxyz;
+	F.block(3, 0, 3, 1) = X.segment(3, 3);
 
 	/*jF*/
-	Eigen::MatrixXd jF(X.rows(), X.rows());
+	Eigen::MatrixXd jF(X.size(), X.size());
 	/*jF-xyz*/
 	jF.block(0, 0, 3, 3) = Eigen::Matrix3d::Identity();
 	jF(0, 3) = Dxyz(1)*(cos(r_)*sin(p_)*cos(y_) + sin(r_)*sin(y_)) + Dxyz(2)*(-sin(r_)*sin(p_)*cos(y_) + cos(r_)*sin(y_));
@@ -243,22 +243,66 @@ void EdgeSLAMEKF::PredictionOdom(nav_msgs::Odometry odom, double dt)
 
 	/*Q*/
 	const double sigma = 1.0e-1;
-	Eigen::MatrixXd Q = sigma*Eigen::MatrixXd::Identity(X.rows(), X.rows());
+	Eigen::MatrixXd Q = sigma*Eigen::MatrixXd::Identity(X.size(), X.size());
 	
 	/*Update*/
 	X = F;
 	P = jF*P*jF.transpose() + Q;
 
-	std::cout << "Dxyz =" << std::endl << Dxyz << std::endl;
+	/* std::cout << "jF =" << std::endl << jF << std::endl; */
+	/* std::cout << "X =" << std::endl << X << std::endl; */
+	/* std::cout << "P =" << std::endl << P << std::endl; */
 }
 
 void EdgeSLAMEKF::CallbackSLAMOdom(const nav_msgs::OdometryConstPtr& msg)
 {
+	std::cout << "Callback SLAM Odom" << std::endl;
+
+	tf::Quaternion q_pose(
+		msg->pose.pose.orientation.z,
+		msg->pose.pose.orientation.x,
+		msg->pose.pose.orientation.y,
+		msg->pose.pose.orientation.w
+	);
+	double r_slam, p_slam, y_slam;
+	tf::Matrix3x3(q_pose).getRPY(r_slam, p_slam, y_slam);
+
+	/*Z*/
+	Eigen::VectorXd Z(6);
+	Z <<	(double)msg->pose.pose.position.z,
+			(double)msg->pose.pose.position.x,
+			(double)msg->pose.pose.position.y,
+			r_slam,
+			p_slam,
+			y_slam;
+	/*H, jH*/
+	Eigen::MatrixXd H = Eigen::MatrixXd::Identity(Z.size(), X.size());
+	Eigen::MatrixXd jH = H;
+	/*R*/
+	const double sigma = 1.0e-1;
+	Eigen::MatrixXd R = sigma*Eigen::MatrixXd::Identity(Z.size(), Z.size());
+	/*(Y, S, K, I)*/
+	Eigen::VectorXd Y(Z.size());
+	Eigen::MatrixXd S(Z.size(), Z.size());
+	Eigen::MatrixXd K(X.size(), Z.size());
+	Eigen::MatrixXd I = Eigen::MatrixXd::Identity(X.size(), X.size());
+	/*update*/
+	Y = Z - H*X;
+	for(size_t i=3;i<6;i++)	Y(i) = PiToPi(Y(i));
+	S = jH*P*jH.transpose() + R;
+	K = P*jH.transpose()*S.inverse();
+	X = X + K*Y;
+	for(size_t i=3;i<6;i++)	X(i) = PiToPi(X(i));
+	P = (I - K*jH)*P;
+
+	std::cout << "Y =" << std::endl << Y << std::endl;
+	std::cout << "K*Y =" << std::endl << K*Y << std::endl;
+	std::cout << "P =" << std::endl << P << std::endl;
 }
 
 void EdgeSLAMEKF::Publication(void)
 {
-	std::cout << "Publication" << std::endl;
+	/* std::cout << "Publication" << std::endl; */
 
 	geometry_msgs::PoseStamped pose_pub = StateVectorToPoseStamped();
 	pose_pub.header.frame_id = "/odom";
@@ -269,11 +313,14 @@ void EdgeSLAMEKF::Publication(void)
 
 geometry_msgs::PoseStamped EdgeSLAMEKF::StateVectorToPoseStamped(void)
 {
+	Eigen::VectorXd X_ = X + Reset_origin;
+	for(int i=3;i<6;i++)	X_(i) = PiToPi(X_(i));
+
 	geometry_msgs::PoseStamped pose;
-	pose.pose.position.x = X(0, 0);
-	pose.pose.position.y = X(1, 0);
-	pose.pose.position.z = X(2, 0);
-	tf::Quaternion q_orientation = tf::createQuaternionFromRPY(X(3, 0), X(4, 0), X(5, 0));
+	pose.pose.position.x = X_(0);
+	pose.pose.position.y = X_(1);
+	pose.pose.position.z = X_(2);
+	tf::Quaternion q_orientation = tf::createQuaternionFromRPY(X_(3), X_(4), X_(5));
 	pose.pose.orientation.x = q_orientation.x();
 	pose.pose.orientation.y = q_orientation.y();
 	pose.pose.orientation.z = q_orientation.z();
@@ -284,7 +331,7 @@ geometry_msgs::PoseStamped EdgeSLAMEKF::StateVectorToPoseStamped(void)
 
 float EdgeSLAMEKF::PiToPi(double angle)
 {
-	return fmod(angle + M_PI, 2*M_PI) - M_PI;
+	return atan2(sin(angle), cos(angle));
 }
 
 int main(int argc, char** argv)
