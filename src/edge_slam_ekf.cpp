@@ -21,7 +21,6 @@ class EdgeSLAMEKF{
 		const int size_robot_state = 6;
 		/*objects*/
 		sensor_msgs::Imu bias;
-		/* Eigen::MatrixXd X;	//X, Y, Z, R, P, Y (Global) */
 		Eigen::VectorXd X;	//X, Y, Z, R, P, Y (Global)
 		Eigen::MatrixXd P;
 		Eigen::VectorXd Reset_origin;	//X, Y, Z, R, P, Y (Global)
@@ -147,9 +146,9 @@ void EdgeSLAMEKF::PredictionIMU(sensor_msgs::Imu imu, double dt)
 					cos(delta_r)*sin(delta_p)*cos(delta_y) + sin(delta_r)*sin(delta_y),	cos(delta_r)*sin(delta_p)*sin(delta_y) - sin(delta_r)*cos(delta_y),	cos(delta_r)*cos(delta_p);
 
 	/*F*/
-	Eigen::MatrixXd F(X.size(), 1);
-	F.block(0, 0, 3, 1) = X.segment(0, 3);
-	F.block(3, 0, 3, 1) = X.segment(3, 3) + Rot_rpy*Drpy;
+	Eigen::VectorXd F(X.size());
+	F.segment(0, 3) = X.segment(0, 3);
+	F.segment(3, 3) = X.segment(3, 3) + Rot_rpy*Drpy;
 
 	/*jF*/
 	Eigen::MatrixXd jF(X.size(), X.size());
@@ -220,9 +219,9 @@ void EdgeSLAMEKF::PredictionOdom(nav_msgs::Odometry odom, double dt)
 				-sin(p_),			sin(r_)*cos(p_),							cos(r_)*cos(p_);
 
 	/*F*/
-	Eigen::MatrixXd F(X.size(), 1);
-	F.block(0, 0, 3, 1) = X.segment(0, 3) + Rot_xyz*Dxyz;
-	F.block(3, 0, 3, 1) = X.segment(3, 3);
+	Eigen::VectorXd F(X.size());
+	F.segment(0, 3) = X.segment(0, 3) + Rot_xyz*Dxyz;
+	F.segment(3, 3) = X.segment(3, 3);
 
 	/*jF*/
 	Eigen::MatrixXd jF(X.size(), X.size());
