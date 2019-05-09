@@ -179,14 +179,19 @@ void GyrodometryPCA::ComputePCA(void)
 	tf::Quaternion q_pose_pca = tf::createQuaternionFromRPY(0.0, 0.0, atan2(vec_pca(1), vec_pca(0)));
 	quaternionTFToMsg(q_pose_pca, odom_pca.pose.pose.orientation);
 
+	double dx = odom_pca.pose.pose.position.x - odom_record[0].pose.pose.position.x;
+	double dy = odom_pca.pose.pose.position.y - odom_record[0].pose.pose.position.y;
+	double straight_dist = sqrt(dx*dx + dy*dy);
+
 	/* std::cout << "es.eigenvalues():" << std::endl << es.eigenvalues() << std::endl; */
 	std::cout << "es.eigenvalues().real():" << std::endl << es.eigenvalues().real() << std::endl;
 	/* std::cout << "es.eigenvectors():" << std::endl << es.eigenvectors() << std::endl; */
 	std::cout << "es.eigenvectors().real():" << std::endl << es.eigenvectors().real() << std::endl;
 	std::cout << "eigenvectors.col(col_pc1):" << std::endl << eigenvectors.col(col_pc1) << std::endl;
+	std::cout << "straight_dist: " << straight_dist << std::endl;
 }
 
-void GyrodometryPCA::Correction(void)
+void GyrodometryPCA::Correction(void)	//test
 {
 	int node_s = 1;
 	int node_g = 2;
