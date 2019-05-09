@@ -64,6 +64,7 @@ EdgeSLAMEKF::EdgeSLAMEKF()
 	pub_pose = nh.advertise<geometry_msgs::PoseStamped>("/pose_edge_slam_ekf", 1);
 	X = Eigen::MatrixXd::Constant(size_robot_state, 1, 0.0);
 	P = Eigen::MatrixXd::Identity(size_robot_state, size_robot_state);
+	Reset_origin = Eigen::VectorXd::Zero(6);
 }
 
 void EdgeSLAMEKF::CallbackResetPose(const geometry_msgs::PoseStampedConstPtr& msg)
