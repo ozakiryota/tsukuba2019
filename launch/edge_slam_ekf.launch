@@ -13,7 +13,9 @@
 	<include file="$(find velodyne_pointcloud)/launch/32e_points.launch"/>
 
 	<!-- proposed method -->
-	<node pkg="gyrodometry" name="initial_alignment" type="initial_alignment" output="screen"/>
+	<node pkg="gyrodometry" name="initial_alignment" type="initial_alignment" output="screen">
+		<param name="inipose_is_available" type="bool" value="true"/>
+	</node>
 	<node pkg="tsukuba2019" name="edge_slam_ekf" type="edge_slam_ekf" output="screen"/>
 	<include file="$(find loam_velodyne)/launch/hector_loam_velodyne.launch"/>
 
@@ -23,7 +25,4 @@
 		<remap from="/odom" to="/tinypower/odom/republished"/>
 	</node>
 	<node pkg="pose_estimation_walls" name="odom_creator_for_loamvelodyne" type="odom_creator_for_loamvelodyne"/>
-
-	<!-- graph -->
-	<!-- <node pkg="pose_estimation_walls" name="graph_rpy" type="graph_rpy.py"/> -->
 </launch>
