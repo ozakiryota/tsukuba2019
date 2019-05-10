@@ -336,11 +336,11 @@ geometry_msgs::PoseStamped EdgeSLAMEKF::StateVectorToPoseStamped(void)
 	pose.pose.orientation.z = q_orientation.z();
 	pose.pose.orientation.w = q_orientation.w();
 
-	std::cout << "X_ = " << std::endl << X_ << std::endl;
-	std::cout << "pose.pose.orientation.x = " << pose.pose.orientation.x << std::endl;
-	std::cout << "pose.pose.orientation.y = " << pose.pose.orientation.y << std::endl;
-	std::cout << "pose.pose.orientation.z = " << pose.pose.orientation.z << std::endl;
-	std::cout << "pose.pose.orientation.w = " << pose.pose.orientation.w << std::endl;
+	/* std::cout << "X_ = " << std::endl << X_ << std::endl; */
+	/* std::cout << "pose.pose.orientation.x = " << pose.pose.orientation.x << std::endl; */
+	/* std::cout << "pose.pose.orientation.y = " << pose.pose.orientation.y << std::endl; */
+	/* std::cout << "pose.pose.orientation.z = " << pose.pose.orientation.z << std::endl; */
+	/* std::cout << "pose.pose.orientation.w = " << pose.pose.orientation.w << std::endl; */
 
 	return pose;
 }

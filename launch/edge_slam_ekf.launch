@@ -23,6 +23,7 @@
 	<node pkg="pose_estimation_walls" name="odom_republish_infant" type="odom_republish_infant"/>
 	<node pkg="gyrodometry" name="gyrodometry3d" type="gyrodometry3d">
 		<remap from="/odom" to="/tinypower/odom/republished"/>
+		<param name="inipose_is_available" type="bool" value="true"/>
 	</node>
 	<node pkg="pose_estimation_walls" name="odom_creator_for_loamvelodyne" type="odom_creator_for_loamvelodyne"/>
 </launch>
