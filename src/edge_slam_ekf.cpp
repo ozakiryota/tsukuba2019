@@ -57,7 +57,7 @@ class EdgeSLAMEKF{
 EdgeSLAMEKF::EdgeSLAMEKF()
 {
 	sub_reset_pose = nh.subscribe("/reset_pose", 1, &EdgeSLAMEKF::CallbackResetPose, this);
-	sub_bias = nh.subscribe("/imu_bias", 1, &EdgeSLAMEKF::CallbackBias, this);
+	sub_bias = nh.subscribe("/imu/bias", 1, &EdgeSLAMEKF::CallbackBias, this);
 	sub_imu = nh.subscribe("/imu/data", 1, &EdgeSLAMEKF::CallbackIMU, this);
 	sub_odom = nh.subscribe("/tinypower/odom", 1, &EdgeSLAMEKF::CallbackOdom, this);
 	sub_slam_odom = nh.subscribe("/integrated_to_init", 1, &EdgeSLAMEKF::CallbackSLAMOdom, this);
@@ -99,7 +99,8 @@ void EdgeSLAMEKF::CallbackIMU(const sensor_msgs::ImuConstPtr& msg)
 {
 	/* std::cout << "Callback IMU" << std::endl; */
 
-	time_imu_now = ros::Time::now();
+	// time_imu_now = ros::Time::now();
+	time_imu_now = msg->header.stamp;
 	double dt;
 	try{
 		dt = (time_imu_now - time_imu_last).toSec();
@@ -109,7 +110,7 @@ void EdgeSLAMEKF::CallbackIMU(const sensor_msgs::ImuConstPtr& msg)
 	}
 	time_imu_last = time_imu_now;
 	if(first_callback_imu)	dt = 0.0;
-	else	PredictionIMU(*msg, dt);
+	else if(bias_is_available)	PredictionIMU(*msg, dt);
 	
 	Publication();
 
@@ -185,7 +186,8 @@ void EdgeSLAMEKF::CallbackOdom(const nav_msgs::OdometryConstPtr& msg)
 {
 	/* std::cout << "Callback Odom" << std::endl; */
 
-	time_odom_now = ros::Time::now();
+	// time_odom_now = ros::Time::now();
+	time_odom_now = msg->header.stamp;
 	double dt;
 	try{
 		dt = (time_odom_now - time_odom_last).toSec();
@@ -256,15 +258,15 @@ void EdgeSLAMEKF::PredictionOdom(nav_msgs::Odometry odom, double dt)
 
 void EdgeSLAMEKF::CallbackSLAMOdom(const nav_msgs::OdometryConstPtr& msg)
 {
-	std::cout << "Callback SLAM Odom" << std::endl;
+	/* std::cout << "Callback SLAM Odom" << std::endl; */
 	
-	ObservationSLAMOdom(*msg);
+	// ObservationSLAMOdom(*msg);
 	Publication();
 }
 
 void EdgeSLAMEKF::ObservationSLAMOdom(nav_msgs::Odometry slam_odom)
 {
-	std::cout << "Observation SLAM Odom" << std::endl;
+	/* std::cout << "Observation SLAM Odom" << std::endl; */
 
 	tf::Quaternion q_pose(
 		slam_odom.pose.pose.orientation.z,
@@ -333,6 +335,12 @@ geometry_msgs::PoseStamped EdgeSLAMEKF::StateVectorToPoseStamped(void)
 	pose.pose.orientation.y = q_orientation.y();
 	pose.pose.orientation.z = q_orientation.z();
 	pose.pose.orientation.w = q_orientation.w();
+
+	std::cout << "X_ = " << std::endl << X_ << std::endl;
+	std::cout << "pose.pose.orientation.x = " << pose.pose.orientation.x << std::endl;
+	std::cout << "pose.pose.orientation.y = " << pose.pose.orientation.y << std::endl;
+	std::cout << "pose.pose.orientation.z = " << pose.pose.orientation.z << std::endl;
+	std::cout << "pose.pose.orientation.w = " << pose.pose.orientation.w << std::endl;
 
 	return pose;
 }
