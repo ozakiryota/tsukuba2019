@@ -46,6 +46,7 @@ class EdgeSLAMEKF{
 		void CallbackOdom(const nav_msgs::OdometryConstPtr& msg);
 		void PredictionOdom(nav_msgs::Odometry odom, double dt);
 		void CallbackSLAMOdom(const nav_msgs::OdometryConstPtr& msg);
+		void ObservationSLAMOdom(nav_msgs::Odometry slam_odom);
 		Eigen::Vector3d GetLocalDeltaXYZ(nav_msgs::Odometry origin, nav_msgs::Odometry target);
 		Eigen::Vector3d GetLocalDeltaRPY(nav_msgs::Odometry origin, nav_msgs::Odometry target);
 		void Publication();
@@ -256,21 +257,29 @@ void EdgeSLAMEKF::PredictionOdom(nav_msgs::Odometry odom, double dt)
 void EdgeSLAMEKF::CallbackSLAMOdom(const nav_msgs::OdometryConstPtr& msg)
 {
 	std::cout << "Callback SLAM Odom" << std::endl;
+	
+	ObservationSLAMOdom(*msg);
+	Publication();
+}
+
+void EdgeSLAMEKF::ObservationSLAMOdom(nav_msgs::Odometry slam_odom)
+{
+	std::cout << "Observation SLAM Odom" << std::endl;
 
 	tf::Quaternion q_pose(
-		msg->pose.pose.orientation.z,
-		msg->pose.pose.orientation.x,
-		msg->pose.pose.orientation.y,
-		msg->pose.pose.orientation.w
+		slam_odom.pose.pose.orientation.z,
+		slam_odom.pose.pose.orientation.x,
+		slam_odom.pose.pose.orientation.y,
+		slam_odom.pose.pose.orientation.w
 	);
 	double r_slam, p_slam, y_slam;
 	tf::Matrix3x3(q_pose).getRPY(r_slam, p_slam, y_slam);
 
 	/*Z*/
 	Eigen::VectorXd Z(6);
-	Z <<	(double)msg->pose.pose.position.z,
-			(double)msg->pose.pose.position.x,
-			(double)msg->pose.pose.position.y,
+	Z <<	(double)slam_odom.pose.pose.position.z,
+			(double)slam_odom.pose.pose.position.x,
+			(double)slam_odom.pose.pose.position.y,
 			r_slam,
 			p_slam,
 			y_slam;
