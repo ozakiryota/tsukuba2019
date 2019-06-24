@@ -33,7 +33,7 @@ ResetGPSOrigin::ResetGPSOrigin()
 	: nhPrivate("~")
 {
 	sub_odom = nh.subscribe("/gps_odom", 1, &ResetGPSOrigin::CallbackOdom, this);
-	pub_odom = nh.advertise<nav_msgs::Odometry>("/odom/reset_origin", 1);
+	pub_odom = nh.advertise<nav_msgs::Odometry>("/gps_odom/reset_origin", 1);
 
 	nhPrivate.param("parent_frame_id", parent_frame_id_name, std::string("/odom"));
 	nhPrivate.param("child_frame_id", child_frame_id_name, std::string("/gps_odom/reset_origin"));

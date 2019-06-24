@@ -18,5 +18,10 @@
 	<node pkg="gps_common" type="utm_odometry_node" name="utm_odometry_node"/>
 
 	<!-- main -->
-	<node pkg="tsukuba2019" name="reset_gps_origin" type="reset_gps_origin" output="screen"/>
+	<node pkg="tsukuba2019" name="reset_gps_origin" type="reset_gps_origin" output="screen">
+		<param name="parent_frame_id" type="string" value="/map"/>
+		<param name="child_frame_id" type="string" value="/gps_odom/reset_origin"/>
+		<param name="map_origin_x" type="double" value="416892.838"/>
+		<param name="map_origin_y" type="double" value="3993537.078"/>
+	</node>
 </launch>
