@@ -1,0 +1,22 @@
+<launch>
+	<!-- global rosparam -->
+	<param name="use_sim_time" value="true"/>
+
+	<!-- rosbag -->
+
+	<!-- rviz -->
+	<node pkg="rviz" type="rviz" name="rviz"/>
+
+	<!-- sensor driver -->
+	<node pkg="nmea_navsat_driver" type="nmea_topic_serial_reader" name="nmea_topic_serial_reader">
+		<param name="port" value="/dev/ttyUSB0"/>
+		<param name="baud" value="36800"/>
+	</node>
+	<node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="nmea_topic_driver">
+		<!-- <param name="useRMC" value="True" />  -->
+	</node>
+	<node pkg="gps_common" type="utm_odometry_node" name="utm_odometry_node"/>
+
+	<!-- main -->
+	<node pkg="tsukuba2019" name="reset_gps_origin" type="reset_gps_origin" output="screen"/>
+</launch>
