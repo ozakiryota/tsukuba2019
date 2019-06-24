@@ -14,7 +14,7 @@
 
 	<!-- proposed method -->
 	<node pkg="gyrodometry" name="initial_alignment" type="initial_alignment" output="screen">
-		<param name="inipose_is_available" type="bool" value="true"/>
+		<param name="initial_orientation_is_0001" type="bool" value="true"/>
 	</node>
 	<node pkg="tsukuba2019" name="edge_slam_ekf" type="edge_slam_ekf" output="screen"/>
 	<include file="$(find loam_velodyne)/launch/hector_loam_velodyne.launch"/>
@@ -23,7 +23,6 @@
 	<node pkg="pose_estimation_walls" name="odom_republish_infant" type="odom_republish_infant"/>
 	<node pkg="gyrodometry" name="gyrodometry3d" type="gyrodometry3d">
 		<remap from="/odom" to="/tinypower/odom/republished"/>
-		<param name="inipose_is_available" type="bool" value="true"/>
 	</node>
 	<node pkg="pose_estimation_walls" name="odom_creator_for_loamvelodyne" type="odom_creator_for_loamvelodyne"/>
 </launch>

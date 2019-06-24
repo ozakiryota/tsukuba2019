@@ -260,7 +260,7 @@ void EdgeSLAMEKF::CallbackSLAMOdom(const nav_msgs::OdometryConstPtr& msg)
 {
 	/* std::cout << "Callback SLAM Odom" << std::endl; */
 	
-	// ObservationSLAMOdom(*msg);
+	ObservationSLAMOdom(*msg);
 	Publication();
 }
 
