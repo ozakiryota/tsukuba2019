@@ -77,7 +77,8 @@ void ResetGPSOrigin::CallbackOdom(const nav_msgs::OdometryConstPtr& msg)
 		odom_pub.header.stamp = msg->header.stamp;
 		odom_pub.pose.pose.position.x = q_relative_position.x();
 		odom_pub.pose.pose.position.y = q_relative_position.y();
-		odom_pub.pose.pose.position.z = q_relative_position.z();
+		// odom_pub.pose.pose.position.z = q_relative_position.z();
+		odom_pub.pose.pose.position.z = 0;
 		quaternionTFToMsg(q_relative_orientation, odom_pub.pose.pose.orientation);
 		odom_pub.twist = msg->twist;
 
