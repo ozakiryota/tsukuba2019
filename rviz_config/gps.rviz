@@ -45,7 +45,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 500
       Reference Frame: <Fixed Frame>
       Value: true
     - Angle Tolerance: 0.100000001
@@ -53,7 +53,7 @@ Visualization Manager:
       Color: 0; 0; 0
       Enabled: true
       Keep: 10000
-      Length: 5
+      Length: 1
       Name: Odometry
       Position Tolerance: 0.100000001
       Topic: /gps/odom/with_orientation/reset_origin
@@ -66,7 +66,7 @@ Visualization Manager:
       Length: 1
       Name: Odometry
       Position Tolerance: 0.100000001
-      Topic: /odom/reset_origin
+      Topic: /gyrodometry
       Value: false
     - Class: rviz/Image
       Enabled: true
@@ -82,15 +82,22 @@ Visualization Manager:
       Value: true
     - Class: rviz/Axes
       Enabled: true
-      Length: 10
+      Length: 5
       Name: Axes
-      Radius: 5
-      Reference Frame: gps/odom/with_orientation
+      Radius: 1
+      Reference Frame: gps/odom/with_orientation/reset_origin
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 3
+      Name: Axes
+      Radius: 1
+      Reference Frame: odom
       Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
-    Fixed Frame: odom
+    Fixed Frame: utm/reset_origin
     Frame Rate: 30
   Name: root
   Tools:
@@ -119,7 +126,7 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 4.2762332
+      Scale: 7.60497761
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: 0

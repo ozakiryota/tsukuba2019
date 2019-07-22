@@ -27,6 +27,7 @@ class CombineGPSPositionOrientation{
 		void CallbackOdom(const nav_msgs::OdometryConstPtr& msg);
 		void CallbackSentence(const nmea_msgs::SentenceConstPtr& msg);
 		std::vector<std::string> SplitSentence(std::string sentence, std::string delimiter);
+		double NorthBaseToUTM(double angle);
 		void Publication(void);
 		double DegToRad(double angle);
 		double PiToPi(double angle);
@@ -57,6 +58,8 @@ void CombineGPSPositionOrientation::CallbackSentence(const nmea_msgs::SentenceCo
 	if(msg->sentence.find(type.c_str()) != std::string::npos){
 		std::vector<std::string> splited_sentence = SplitSentence(msg->sentence, std::string(","));
 		double yaw = DegToRad( std::stod(splited_sentence[index]) );
+		/* yaw += M_PI; //convet to utm */
+		yaw = NorthBaseToUTM(yaw);
 		yaw = PiToPi(yaw);
     	tf::Quaternion q = tf::createQuaternionFromRPY(0.0, 0.0, yaw);
     	quaternionTFToMsg(q, odom_pub.pose.pose.orientation);
@@ -86,6 +89,11 @@ std::vector<std::string> CombineGPSPositionOrientation::SplitSentence(std::strin
 	/* std::cout << "last_word.c_str() = " << last_word.c_str() << std::endl; */
 
 	return words;
+}
+
+double CombineGPSPositionOrientation::NorthBaseToUTM(double angle)
+{
+	return -(angle - M_PI/2);
 }
 
 void CombineGPSPositionOrientation::Publication(void)
