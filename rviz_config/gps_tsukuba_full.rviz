@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Status1
       Splitter Ratio: 0.5
     Tree Height: 475
   - Class: rviz/Selection
@@ -31,9 +30,9 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1
+      Cell Size: 5
       Class: rviz/Grid
-      Color: 160; 160; 164
+      Color: 0; 0; 0
       Enabled: true
       Line Style:
         Line Width: 0.0299999993
@@ -45,18 +44,18 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 1000
       Reference Frame: <Fixed Frame>
       Value: true
     - Angle Tolerance: 0.100000001
       Class: rviz/Odometry
-      Color: 0; 0; 0
+      Color: 255; 0; 0
       Enabled: true
       Keep: 10000
       Length: 5
       Name: Odometry
       Position Tolerance: 0.100000001
-      Topic: /gps/odom/with_orientation/reset_origin
+      Topic: /gps_odom/reset_origin
       Value: true
     - Angle Tolerance: 0.100000001
       Class: rviz/Odometry
@@ -85,7 +84,7 @@ Visualization Manager:
       Length: 10
       Name: Axes
       Radius: 5
-      Reference Frame: gps/odom/with_orientation
+      Reference Frame: gps_odom/reset_origin
       Value: true
   Enabled: true
   Global Options:
@@ -119,11 +118,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 4.2762332
+      Scale: 1.94529057
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 0
-      Y: 0
+      X: 246.810013
+      Y: -134.577057
     Saved: ~
 Window Geometry:
   Displays:

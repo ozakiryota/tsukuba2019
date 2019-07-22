@@ -1,0 +1,35 @@
+<launch>
+	<!-- global rosparam -->
+	<param name="use_sim_time" value="true"/>
+
+	<!-- rosbag -->
+	<!-- <node pkg="rosbag" type="play" name="player" args="&#45;&#45;clock /home/amsl/ozaki/bagfiles/gps/ikuta/2019&#45;06&#45;28&#45;14&#45;15&#45;08.bag"/> -->
+	<node pkg="rosbag" type="play" name="player" args="--clock /home/amsl/ozaki/bagfiles/cats//tsukuba_challenge/tsukuba/right_start_full_topic.bag -r 1"/>
+	<!-- <node pkg="rosbag" type="play" name="player" args="&#45;&#45;clock /run/user/1000/gvfs/smb&#45;share:server=hornet.local,share=homes/amsl/bagfiles/2019/cats/tsukuba/tsukuba_full_left_start.bag &#45;r 10"/> -->
+
+	<!-- rviz -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tsukuba2019)/rviz_config/gps.rviz"/>
+	<!-- <node pkg="rviz" type="rviz" name="rviz" args="&#45;d $(find tsukuba2019)/rviz_config/gps_tsukuba_full.rviz"/> -->
+
+	<!-- sensor driver -->
+	<!-- <node pkg="nmea_navsat_driver" type="nmea_topic_serial_reader" name="nmea_topic_serial_reader"> -->
+	<!-- 	<param name="port" value="/dev/ttyUSB0"/> -->
+	<!-- 	<param name="baud" value="36800"/> -->
+	<!-- </node> -->
+	<!-- <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="nmea_topic_driver"> -->
+	<!-- 	<!&#45;&#45; <param name="useRMC" value="True" />  &#45;&#45;> -->
+	<!-- </node> -->
+	<!-- <node pkg="gps_common" type="utm_odometry_node" name="utm_odometry_node"/> -->
+
+	<!-- main -->
+	<node pkg="tsukuba2019" name="combine_gps_position_orientation" type="combine_gps_position_orientation" output="screen">
+		<param name="parent_frame_id" type="string" value="/odom"/>
+		<param name="child_frame_id" type="string" value="/gps/odom/with_orientation"/>
+	</node>
+	<node pkg="msg_conversion" name="odometry_reset_origin" type="odometry_reset_origin">
+		<remap from="/odom" to="/gps/odom/with_orientation"/>
+		<remap from="/odom/reset_origin" to="/gps/odom/with_orientation/reset_origin"/>
+		<param name="parent_frame_id" type="string" value="/odom"/>
+		<param name="child_frame_id" type="string" value="/gps/odom/with_orientation"/>
+	</node>
+</launch>
